@@ -1,0 +1,9 @@
+<% if ScraperStatus.running? %>
+  <div class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+    Scraper Running
+  </div>
+<% else %>
+  <div class="bg-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold">
+    Scraper Idle
+  </div>
+<% end %>

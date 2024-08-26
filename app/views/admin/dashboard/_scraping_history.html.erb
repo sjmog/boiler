@@ -1,0 +1,20 @@
+<table>
+  <thead>
+    <tr>
+      <th>Source</th>
+      <th>Scraped At</th>
+      <th>Status</th>
+      <th>Error Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% ScrapingRecord.order(created_at: :desc).limit(20).each do |record| %>
+      <tr>
+        <td><%= record.source.name %></td>
+        <td><%= record.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        <td><%= record.status %></td>
+        <td><%= record.error_message %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
