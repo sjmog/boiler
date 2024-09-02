@@ -80,6 +80,4 @@ test:
 #
 production:
   <<: *default
-  database: dewey2_production
-  username: dewey2
-  password: <%= ENV["dewey2_DATABASE_PASSWORD"] %>
+  url: <%= ENV['DATABASE_URL'] %>
