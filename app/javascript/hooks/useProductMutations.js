@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "react-query";
 import { toast } from "@/components/ui/use-toast";
 import { productApi } from "@/services/api";
 
+// example useProductMutations, pairs with @/services/api/productApi
 export const useProductMutations = () => {
   const queryClient = useQueryClient();
 

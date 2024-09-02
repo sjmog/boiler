@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Buzz" %></title>
+    <title><%= content_for(:title) || "Dewey2" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= yield :head %>
-
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -21,27 +19,9 @@
       };
     </script>
   </head>
-
   <body>
-    <nav class="bg-white shadow-sm border-b">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex-1 flex items-center justify-center">
-            <div class="flex-shrink-0 flex items-center">
-              <%= link_to "buzz", root_path, class: "text-2xl font-bold text-gray-800" %>
-            </div>
-          </div>
-          <div class="flex items-center">
-            <% if controller_name != "admin/dashboard" %>
-              <%= link_to "admin", admin_dashboard_path, class: "text-gray-600 hover:text-gray-900" %>
-            <% end %>
-            <% if current_user %>
-              <%= button_to "sign out", destroy_user_session_path, method: :delete, class: "text-gray-600 hover:text-gray-900 ml-2", form: { class: "inline" } %>
-            <% end %>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <%= render 'shared/nav' %>
+    <%= render 'shared/flash' %>
     <%= yield %>
   </body>
 </html>

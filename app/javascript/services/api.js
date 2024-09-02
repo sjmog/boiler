@@ -50,6 +50,7 @@ api.interceptors.response.use(
   error => handleApiError(error)
 );
 
+// example product API
 export const productApi = {
   fetchProducts: async (offset = 0) => {
     const { data } = await api.get(`/api/v1/products?offset=${offset}`);

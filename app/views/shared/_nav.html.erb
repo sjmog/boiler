@@ -1,0 +1,16 @@
+<nav class="bg-white shadow-sm border-b">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="h-16 relative">
+      <div class='absolute left-1/2 top-1/2 w-[200px] -ml-[100px] h-[50px] -mt-[25px] flex items-center justify-center'>
+        <%= render 'shared/brand' %>
+      </div>
+      <div class="float-right h-16 flex items-center">
+        <% if current_user %>
+          <%= button_to "sign out", destroy_user_session_path, method: :delete, class: "text-gray-600 hover:text-gray-900 ml-2", form: { class: "inline" } %>
+        <% else %>
+          <%= link_to "sign in", new_user_session_path, class: "text-gray-600 hover:text-gray-900" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</nav>

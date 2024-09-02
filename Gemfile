@@ -26,13 +26,19 @@ gem "acts_as_paranoid"
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
 
-gem "discordrb"
-gem "slack-ruby-client"
 gem "dotenv-rails"
-gem "selenium-webdriver"
-gem "capybara"
 gem "ruby-openai"
 gem "devise"
+
+gem "httparty", "~> 0.22.0"
+gem "sidekiq", "~> 7.3"
+
+gem "omniauth-google-oauth2"
+gem "omniauth-facebook"
+gem "omniauth-github"
+gem "omniauth-linkedin-oauth2"
+gem "omniauth-apple"
+gem "omniauth-rails_csrf_protection"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -56,6 +62,9 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
   gem "foreman"
+  gem "rspec-rails"
+  gem "capybara"
+  gem "selenium-webdriver"
 end
 
 group :development do
@@ -64,11 +73,10 @@ group :development do
   gem "rubocop", require: false
   gem "rubocop-rails", require: false
   gem "rubocop-performance", require: false
+  gem "spring-commands-rspec"
 end
 
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
+  gem "database_cleaner-active_record"
 end
-
-gem "httparty", "~> 0.22.0"
-gem "sidekiq", "~> 7.3"
