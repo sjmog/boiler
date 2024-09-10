@@ -16,8 +16,8 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # Bundle and process CSS [https://github.com/rails/cssbundling-rails]
 gem "cssbundling-rails"
-# Build JSON APIs with ease [https://github.com/rails/jbuilder]
-gem "jbuilder"
+# Build fast JSON APIs [https://github.com/amatsuda/jb]
+gem "jb"
 # Use Redis adapter to run Action Cable in production
 gem "redis", ">= 4.0.1"
 
@@ -32,6 +32,9 @@ gem "devise"
 
 gem "httparty", "~> 0.22.0"
 gem "sidekiq", "~> 7.3"
+gem "sidekiq-delay"
+gem "sidekiq-status"
+gem "sidekiq-cron"
 
 gem "omniauth-google-oauth2"
 gem "omniauth-facebook"
@@ -51,6 +54,10 @@ gem "bootsnap", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
+
+gem "pghero"
+gem "pg_query", ">= 2"
+gem "honeybadger"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -74,9 +81,15 @@ group :development do
   gem "rubocop-rails", require: false
   gem "rubocop-performance", require: false
   gem "spring-commands-rspec"
+  gem "kamal"
+  gem "dockerfile-rails"
 end
 
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "database_cleaner-active_record"
 end
+
+gem "thruster", "~> 0.1.8"
+
+gem "rollbar", "~> 3.6"

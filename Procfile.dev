@@ -1,5 +1,5 @@
-web: env RUBY_DEBUG_OPEN=true bin/rails server -p 3000
+web: env RUBY_DEBUG_OPEN=true bin/rails server -p 3000 -b 'ssl://0.0.0.0:3000?key=config/development-ssl/localhost.key&cert=config/development-ssl/localhost.crt'
 js: yarn build --watch
 css: yarn build:css --watch
 redis: bin/start-redis
-worker: bundle exec sidekiq -C config/sidekiq.yml
+sidekiq: bundle exec sidekiq -C config/sidekiq.yml

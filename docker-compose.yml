@@ -1,38 +1,50 @@
-version: '3'
+version: "3.8"
 services:
-  db:
-    image: postgres
-    volumes:
-      - ./tmp/db:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: password
-  redis:
-    image: redis
   web:
-    build: .
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
-    volumes:
-      - .:/app
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-${UID:-1000}}
     ports:
       - "3000:3000"
-    depends_on:
-      - db
-      - redis
     environment:
-      DATABASE_URL: postgres://postgres:password@db:5432/dewey2_production
-      REDIS_URL: redis://redis:6379/1
-      RAILS_ENV: production
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      - RAILS_MASTER_KEY=$RAILS_MASTER_KEY
+      - REDIS_URL=redis://redis-db:6379
+      - DATABASE_URL=postgres://root:password@postgres-db/
+    depends_on:
+      redis-db:
+        condition: service_started
+      postgres-db:
+        condition: service_healthy
+
+  postgres-db:
+    image: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./tmp/db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: pg_isready
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  redis-db:
+    image: redis
+
   sidekiq:
     build: .
     command: bundle exec sidekiq
-    volumes:
-      - .:/app
-    depends_on:
-      - db
-      - redis
     environment:
-      DATABASE_URL: postgres://postgres:password@db:5432/dewey2_production
-      REDIS_URL: redis://redis:6379/1
-      RAILS_ENV: production
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      - RAILS_MASTER_KEY=$RAILS_MASTER_KEY
+      - REDIS_URL=redis://redis-db:6379
+      - DATABASE_URL=postgres://root:password@postgres-db/
+    depends_on:
+      redis-db:
+        condition: service_started
+      postgres-db:
+        condition: service_healthy

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Change to the terraform directory
+cd "$(dirname "${BASH_SOURCE[0]}")/../terraform"
+
+# Load environment variables from .env file if it exists
+if [ -f ../.env ]; then
+    export $(grep -v '^#' ../.env | xargs)
+fi
+
+# Initialize Terraform
+echo "Initializing Terraform..."
+terraform init
+
+# Run Terraform destroy
+echo "Running Terraform destroy..."
+terraform destroy -auto-approve
+
+echo "Teardown complete!"

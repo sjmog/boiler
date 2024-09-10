@@ -263,7 +263,7 @@ Devise.setup do |config|
   # should add them to the navigational formats lists.
   #
   # The "*/*" below is required to match Internet Explorer requests.
-  # config.navigational_formats = ['*/*', :html, :turbo_stream]
+  # config.navigational_formats = ['*/*', :html, :turbo_stream, :json]
 
   # The default HTTP method used to sign out a resource. Default is :delete.
   config.sign_out_via = :delete
@@ -271,7 +271,7 @@ Devise.setup do |config|
   # ==> OmniAuth
   if ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_ID"] != "xxx" &&
      ENV["GOOGLE_CLIENT_SECRET"].present? && ENV["GOOGLE_CLIENT_SECRET"] != "xxx"
-    config.omniauth :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"], scope: "userinfo.email, userinfo.profile", prompt: "select_account", image_aspect_ratio: "square", image_size: 50, access_type: "offline"
+    config.omniauth :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"], scope: "email,profile"
   end
 
   if ENV["FACEBOOK_APP_ID"].present? && ENV["FACEBOOK_APP_ID"] != "xxx" &&

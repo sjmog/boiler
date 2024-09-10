@@ -80,6 +80,9 @@ GEM
     ast (2.4.2)
     base64 (0.2.0)
     bcrypt (3.1.20)
+    bcrypt_pbkdf (1.1.1)
+    bcrypt_pbkdf (1.1.1-arm64-darwin)
+    bcrypt_pbkdf (1.1.1-x86_64-darwin)
     bigdecimal (3.1.8)
     bindata (2.5.0)
     bindex (0.8.1)
@@ -97,6 +100,8 @@ GEM
       rack-test (>= 0.6.3)
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
+    chronic_duration (0.10.6)
+      numerizer (~> 0.1.1)
     concurrent-ruby (1.3.4)
     connection_pool (2.4.1)
     crass (1.0.6)
@@ -118,12 +123,17 @@ GEM
       responders
       warden (~> 1.2.3)
     diff-lcs (1.5.1)
-    dotenv (3.1.2)
-    dotenv-rails (3.1.2)
-      dotenv (= 3.1.2)
-      railties (>= 6.1)
+    dockerfile-rails (1.6.17)
+      rails (>= 3.0.0)
+    dotenv (2.8.1)
+    dotenv-rails (2.8.1)
+      dotenv (= 2.8.1)
+      railties (>= 3.2)
     drb (2.2.1)
+    ed25519 (1.3.0)
     erubi (1.13.0)
+    et-orbi (1.2.11)
+      tzinfo
     event_stream_parser (1.0.0)
     faraday (2.10.1)
       faraday-net_http (>= 2.0, < 3.2)
@@ -135,9 +145,31 @@ GEM
     faraday-net_http (3.1.1)
       net-http
     foreman (0.88.1)
+    fugit (1.11.1)
+      et-orbi (~> 1, >= 1.2.11)
+      raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    google-protobuf (4.28.0)
+      bigdecimal
+      rake (>= 13)
+    google-protobuf (4.28.0-aarch64-linux)
+      bigdecimal
+      rake (>= 13)
+    google-protobuf (4.28.0-arm64-darwin)
+      bigdecimal
+      rake (>= 13)
+    google-protobuf (4.28.0-x86-linux)
+      bigdecimal
+      rake (>= 13)
+    google-protobuf (4.28.0-x86_64-darwin)
+      bigdecimal
+      rake (>= 13)
+    google-protobuf (4.28.0-x86_64-linux)
+      bigdecimal
+      rake (>= 13)
     hashie (5.0.0)
+    honeybadger (5.15.6)
     httparty (0.22.0)
       csv
       mini_mime (>= 1.0.0)
@@ -148,9 +180,7 @@ GEM
     irb (1.14.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    jbuilder (2.12.0)
-      actionview (>= 5.0.0)
-      activesupport (>= 5.0.0)
+    jb (0.8.2)
     jsbundling-rails (1.3.1)
       railties (>= 6.0.0)
     json (2.7.2)
@@ -163,6 +193,17 @@ GEM
       faraday-follow_redirects
     jwt (2.8.2)
       base64
+    kamal (1.8.3)
+      activesupport (>= 7.0)
+      base64 (~> 0.2)
+      bcrypt_pbkdf (~> 1.0)
+      concurrent-ruby (~> 1.2)
+      dotenv (~> 2.8)
+      ed25519 (~> 1.2)
+      net-ssh (~> 7.0)
+      sshkit (>= 1.23.0, < 2.0)
+      thor (~> 1.2)
+      zeitwerk (~> 2.5)
     language_server-protocol (3.17.0.3)
     logger (1.6.0)
     loofah (2.22.0)
@@ -190,8 +231,13 @@ GEM
       net-protocol
     net-protocol (0.2.2)
       timeout
+    net-scp (4.0.0)
+      net-ssh (>= 2.6.5, < 8.0.0)
+    net-sftp (4.0.0)
+      net-ssh (>= 5.0.0, < 8.0.0)
     net-smtp (0.5.0)
       net-protocol
+    net-ssh (7.2.3)
     nio4r (2.7.3)
     nokogiri (1.16.7-aarch64-linux)
       racc (~> 1.4)
@@ -205,6 +251,7 @@ GEM
       racc (~> 1.4)
     nokogiri (1.16.7-x86_64-linux)
       racc (~> 1.4)
+    numerizer (0.1.1)
     oauth2 (2.0.9)
       faraday (>= 0.17.3, < 3.0)
       jwt (>= 1.0, < 3.0)
@@ -244,11 +291,16 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.5.7)
+    pg_query (5.1.0)
+      google-protobuf (>= 3.22.3)
+    pghero (3.6.0)
+      activerecord (>= 6.1)
     psych (5.1.2)
       stringio
     public_suffix (6.0.1)
     puma (6.4.2)
       nio4r (~> 2.0)
+    raabro (1.4.0)
     racc (1.8.1)
     rack (3.1.7)
     rack-protection (4.0.0)
@@ -306,6 +358,7 @@ GEM
       railties (>= 5.2)
     rexml (3.3.6)
       strscan
+    rollbar (3.6.0)
     rspec-core (3.13.0)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.2)
@@ -371,6 +424,16 @@ GEM
       logger
       rack (>= 2.2.4)
       redis-client (>= 0.22.2)
+    sidekiq-cron (1.12.0)
+      fugit (~> 1.8)
+      globalid (>= 1.0.1)
+      sidekiq (>= 6)
+    sidekiq-delay (1.0.5)
+      activesupport (>= 3.2)
+      sidekiq (>= 2.12)
+    sidekiq-status (3.0.3)
+      chronic_duration
+      sidekiq (>= 6.0, < 8)
     snaky_hash (2.0.1)
       hashie
       version_gem (~> 1.1, >= 1.1.1)
@@ -384,11 +447,21 @@ GEM
       actionpack (>= 6.1)
       activesupport (>= 6.1)
       sprockets (>= 3.0.0)
+    sshkit (1.23.0)
+      base64
+      net-scp (>= 1.1.2)
+      net-sftp (>= 2.1.2)
+      net-ssh (>= 2.8.0)
     stimulus-rails (1.3.4)
       railties (>= 6.0.0)
     stringio (3.1.1)
     strscan (3.1.0)
     thor (1.3.1)
+    thruster (0.1.8)
+    thruster (0.1.8-aarch64-linux)
+    thruster (0.1.8-arm64-darwin)
+    thruster (0.1.8-x86_64-darwin)
+    thruster (0.1.8-x86_64-linux)
     timeout (0.4.1)
     turbo-rails (2.0.6)
       actionpack (>= 6.0.0)
@@ -433,11 +506,14 @@ DEPENDENCIES
   database_cleaner-active_record
   debug
   devise
+  dockerfile-rails
   dotenv-rails
   foreman
+  honeybadger
   httparty (~> 0.22.0)
-  jbuilder
+  jb
   jsbundling-rails
+  kamal
   omniauth-apple
   omniauth-facebook
   omniauth-github
@@ -445,9 +521,12 @@ DEPENDENCIES
   omniauth-linkedin-oauth2
   omniauth-rails_csrf_protection
   pg (~> 1.1)
+  pg_query (>= 2)
+  pghero
   puma (>= 5.0)
   rails (~> 7.2.1)
   redis (>= 4.0.1)
+  rollbar (~> 3.6)
   rspec-rails
   rubocop
   rubocop-performance
@@ -456,9 +535,13 @@ DEPENDENCIES
   ruby-openai
   selenium-webdriver
   sidekiq (~> 7.3)
+  sidekiq-cron
+  sidekiq-delay
+  sidekiq-status
   spring-commands-rspec
   sprockets-rails
   stimulus-rails
+  thruster (~> 0.1.8)
   turbo-rails
   tzinfo-data
   web-console

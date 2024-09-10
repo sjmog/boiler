@@ -1,0 +1,123 @@
+service: boiler
+
+image: sjmog/boiler:latest
+
+servers:
+  web:
+    hosts:
+      - web
+    labels:
+      traefik.http.routers.boiler.rule: Host(`techmap.app`)
+      traefik.http.routers.boiler_secure.entrypoints: websecure
+      traefik.http.routers.boiler_secure.rule: Host(`techmap.app`)
+      traefik.http.routers.boiler_secure.tls.certresolver: letsencrypt
+    env:
+      clear:
+        NEW_RELIC_APP_NAME: boiler-web
+      secret:
+        - GOOGLE_CLIENT_ID
+        - GOOGLE_CLIENT_SECRET
+  sidekiq:
+    hosts:
+      - web
+    env:
+      clear:
+        RAILS_MAX_THREADS: 10
+        DB_POOL: <%= 10 + 2 %> # RAILS_MAX_THREADS + 2
+        NEW_RELIC_APP_NAME: boiler-sidekiq
+    cmd: "bundle exec sidekiq -C config/sidekiq.yml"
+
+registry:
+  username: sjmog
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  clear:
+    RAILS_MAX_THREADS: 3
+    WEB_CONCURRENCY: 2
+    RAILS_ENV: production
+    REDIS_URL: redis://accessories:6379/1
+  secret:
+    - DATABASE_URL
+    - RAILS_MASTER_KEY
+    - SENTRY_DSN
+
+builder:
+  remote:
+    arch: amd64
+    host: web
+  cache:
+    type: registry
+  args:
+    GIT_REV: <%= `git rev-parse --short HEAD` %>
+    BUILD_DATE: <%= `date -u +"%Y-%m-%dT%H:%M:%S %Z"` %>
+
+accessories:
+  db:
+    image: postgres:16-alpine
+    host: accessories
+    port: 5432
+    env:
+      clear:
+        POSTGRES_USER: postgres
+        POSTGRES_DB: postgres
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data/postgres:/var/lib/postgresql/data
+    files:
+      - infrastructure/postgres/postgresql.conf:/usr/local/share/postgresql/postgresql.conf.sample
+  redis:
+    image: redis:7-alpine
+    host: accessories
+    port: 6379
+    directories:
+      - data/redis:/data
+    files:
+      - infrastructure/redis/redis.conf:/etc/redis/redis.conf
+      - infrastructure/redis/redis-sysctl.conf:/etc/sysctl.conf
+    cmd: redis-server /etc/redis/redis.conf
+  backups:
+    image: eeshugerman/postgres-backup-s3:16
+    host: accessories
+    env:
+      clear:
+        SCHEDULE: "@daily" # optional
+        BACKUP_KEEP_DAYS: 7 # optional
+        S3_BUCKET: pg-boiler-backups
+        S3_PREFIX: backup
+        POSTGRES_HOST: 10.0.0.3
+        POSTGRES_DATABASE: boiler_production
+        POSTGRES_USER: postgres
+      secret:
+        - POSTGRES_PASSWORD
+        - S3_ACCESS_KEY_ID
+        - S3_SECRET_ACCESS_KEY
+
+healthcheck:
+  max_attempts: 20
+
+traefik:
+  image: traefik:v2.10.7
+  options:
+    publish:
+      - "443:443"
+    volume:
+      - "/letsencrypt/acme.json:/letsencrypt/acme.json" # To save the configuration file.
+  args:
+    # accesslog: true
+    # accesslog.format: json
+    entryPoints.web.address: ":80"
+    entryPoints.websecure.address: ":443"
+    entryPoints.web.http.redirections.entryPoint.to: websecure
+    entryPoints.web.http.redirections.entryPoint.scheme: https
+    entryPoints.web.http.redirections.entrypoint.permanent: true
+    certificatesResolvers.letsencrypt.acme.email: "s_morgan@me.com"
+    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
+    certificatesResolvers.letsencrypt.acme.httpchallenge: true
+    certificatesResolvers.letsencrypt.acme.httpchallenge.entrypoint: web
+
+asset_path: /rails/public/assets
+
+primary_role: web

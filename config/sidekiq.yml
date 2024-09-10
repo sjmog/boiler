@@ -1,13 +1,15 @@
-:verbose: true
-:concurrency: 2
+:verbose: false
+:concurrency: <%= ENV.fetch("RAILS_MAX_THREADS", 10).to_i %>
 :timeout: 30
 
 :queues:
-  - default
+  - [urgent, 3]
+  - [default, 2]
+  - [low_priority, 1]
   - mailers
 
 development:
   :concurrency: 5
 
 production:
-  :concurrency: 10
+  :concurrency: <%= ENV.fetch("RAILS_MAX_THREADS", 10).to_i %>

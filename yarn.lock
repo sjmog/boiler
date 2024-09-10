@@ -993,6 +993,11 @@
   resolved "https://registry.yarnpkg.com/@rails/actioncable/-/actioncable-7.2.100.tgz#86ec1c2e00c357cef1e421fd63863d5c34339ce8"
   integrity sha512-7xtIENf0Yw59AFDM3+xqxPCZxev3QVAqjPmUzmgsB9eL8S/zTpB0IU9srNc7XknzJI4e09XKNnCaJRx3gfYzXA==
 
+"@remix-run/router@1.19.1":
+  version "1.19.1"
+  resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.19.1.tgz#984771bfd1de2715f42394c87fb716c1349e014f"
+  integrity sha512-S45oynt/WH19bHbIXjtli6QmwNYvaz+vtnubvNpNDvUOoA/OWh6j1OikIP3G+v5GHdxyC6EXoChG3HgYGEUfcg==
+
 "@shadcn/ui@^0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@shadcn/ui/-/ui-0.0.4.tgz#a0835202fa79073245bc2cb5f837bc514d96b4cb"
@@ -1006,6 +1011,18 @@
     ora "^6.1.2"
     prompts "^2.4.2"
     zod "^3.20.2"
+
+"@tanstack/query-core@5.54.1":
+  version "5.54.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.54.1.tgz#8d6c5e6691dd023f9181d69f7f9d790f52f1bdda"
+  integrity sha512-hKS+WRpT5zBFip21pB6Jx1C0hranWQrbv5EJ7qPoiV5MYI3C8rTCqWC9DdBseiPT1JgQWh8Y55YthuYZNiw3Xw==
+
+"@tanstack/react-query@^5.54.1":
+  version "5.54.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.54.1.tgz#55d9d9b290362160008bf5d5d7dedd485afbfc5e"
+  integrity sha512-SuMi4JBYv49UtmiRyqjxY7XAnE1qwLht9nlkC8sioxFXz5Uzj30lepiKf2mYXuXfC7fHYjTrAPkNx+427pRHXA==
+  dependencies:
+    "@tanstack/query-core" "5.54.1"
 
 "@types/d3-array@^3.0.3":
   version "3.2.1"
@@ -1142,10 +1159,10 @@ autoprefixer@^10.4.20:
     picocolors "^1.0.1"
     postcss-value-parser "^4.2.0"
 
-axios@^1.7.5:
-  version "1.7.5"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.5.tgz#21eed340eb5daf47d29b6e002424b3e88c8c54b1"
-  integrity sha512-fZu86yCo+svH3uqJ/yTdQ0QHpQu5oL+/QE+QPSv6BZSkDAoky9vytxp7u5qk83OJFS3kEBcesWni9WTZAv3tSw==
+axios@^1.7.7:
+  version "1.7.7"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.7.tgz#2f554296f9892a72ac8d8e4c5b79c14a91d0a47f"
+  integrity sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==
   dependencies:
     follow-redirects "^1.15.6"
     form-data "^4.0.0"
@@ -2314,6 +2331,21 @@ react-resizable-panels@^2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/react-resizable-panels/-/react-resizable-panels-2.1.2.tgz#42945db30d9677d42e12b2c0dc39870f7729e6b0"
   integrity sha512-Ku2Bo7JvE8RpHhl4X1uhkdeT9auPBoxAOlGTqomDUUrBAX2mVGuHYZTcWvlnJSgx0QyHIxHECgGB5XVPUbUOkQ==
+
+react-router-dom@^6.26.1:
+  version "6.26.1"
+  resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-6.26.1.tgz#a408892b41767a49dc94b3564b0e7d8e3959f623"
+  integrity sha512-veut7m41S1fLql4pLhxeSW3jlqs+4MtjRLj0xvuCEXsxusJCbs6I8yn9BxzzDX2XDgafrccY6hwjmd/bL54tFw==
+  dependencies:
+    "@remix-run/router" "1.19.1"
+    react-router "6.26.1"
+
+react-router@6.26.1:
+  version "6.26.1"
+  resolved "https://registry.yarnpkg.com/react-router/-/react-router-6.26.1.tgz#88c64837e05ffab6899a49df2a1484a22471e4ce"
+  integrity sha512-kIwJveZNwp7teQRI5QmwWo39A5bXRyqpH0COKKmPnyD2vBvDwgFXSqDUYtt1h+FEyfnE8eXr7oe0MxRzVwCcvQ==
+  dependencies:
+    "@remix-run/router" "1.19.1"
 
 react-smooth@^4.0.0:
   version "4.0.1"

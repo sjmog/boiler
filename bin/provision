@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Change to the terraform directory
+cd "$(dirname "${BASH_SOURCE[0]}")/../terraform"
+
+# Load environment variables from .env file if it exists
+if [ -f ../.env ]; then
+    export $(grep -v '^#' ../.env | xargs)
+fi
+
+# Function to prompt for input with default value
+prompt_with_default() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+    local hint="${4:-}"  # Use empty string if $4 is not provided
+
+    if [ -n "$hint" ]; then
+        prompt="$prompt ($hint)"
+    fi
+
+    read -p "$prompt [$default]: " input
+    input="${input:-$default}"
+    echo "$var_name = \"$input\"" >> terraform.tfvars
+}
+
+# Function to prompt for required input
+prompt_required() {
+    local prompt="$1"
+    local var_name="$2"
+    local hint="${3:-}"  # Use empty string if $3 is not provided
+    local default="${4:-}"  # Use empty string if $4 is not provided
+
+    while true; do
+        if [ -n "$hint" ]; then
+            prompt="$prompt ($hint)"
+        fi
+        if [ -n "$default" ]; then
+            read -p "$prompt [$default]: " input
+            input="${input:-$default}"
+        else
+            read -p "$prompt: " input
+        fi
+        if [ -n "$input" ]; then
+            echo "$var_name = \"$input\"" >> terraform.tfvars
+            break
+        else
+            echo "This field is required. Please try again."
+        fi
+    done
+}
+
+# Create or update terraform.tfvars
+> terraform.tfvars
+
+# Prompt for Hetzner API key
+prompt_required "Enter your Hetzner API key" "hetzner_api_key" "" "${HETZNER_API_KEY:-}"
+
+# Prompt for other variables
+prompt_with_default "Enter the region" "nbg1" "region"
+prompt_with_default "Enter the server type" "cx22" "server_type"
+prompt_with_default "Enter the operating system" "ubuntu-24.04" "operating_system"
+prompt_with_default "Enter the number of web servers" "1" "web_servers_count"
+prompt_with_default "Enter the number of accessories" "1" "accessories_count"
+prompt_required "Enter your Cloudflare API token" "cloudflare_api_token" "" "${CLOUDFLARE_API_TOKEN:-}"
+prompt_required "Enter your domain name" "domain_name" "e.g. techmap.app"
+prompt_required "Enter your subdomain" "subdomain" "e.g. www, or @ for apex"
+
+echo "terraform.tfvars created/updated with your configuration."
+
+# Generate SSH key
+ssh_key_path="$HOME/.ssh/hetzner"
+if [ ! -f "$ssh_key_path" ]; then
+    echo "Generating SSH key..."
+    ssh-keygen -t rsa -b 4096 -f "$ssh_key_path" -N ""
+    echo "SSH key generated at $ssh_key_path"
+else
+    echo "SSH key already exists at $ssh_key_path"
+fi
+
+# Update cloudinit/base.yml with user's GitHub username
+github_username="${GITHUB_USERNAME:-}"
+while true; do
+    if [ -z "$github_username" ]; then
+        read -p "Enter your GitHub username: " github_username
+    fi
+    if [ -n "$github_username" ]; then
+        # Use perl instead of sed for better cross-platform compatibility
+        perl -i -pe "s/gh:sjmog/gh:$github_username/" ./cloudinit/base.yml
+        echo "Updated cloudinit/base.yml with your GitHub username for SSH key import."
+        break
+    else
+        echo "GitHub username cannot be empty. Please try again."
+        github_username=""
+    fi
+done
+
+# Initialize Terraform
+echo "Initializing Terraform..."
+terraform init
+
+# Run Terraform plan
+echo "Running Terraform plan..."
+terraform plan
+
+# Confirm before applying
+read -p "Do you want to apply the Terraform configuration? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    echo "Applying Terraform configuration..."
+    terraform apply
+else
+    echo "Terraform apply cancelled."
+    exit 0
+fi
+
+echo "Provisioning complete!"
