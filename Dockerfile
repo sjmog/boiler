@@ -5,18 +5,25 @@ ARG RUBY_VERSION=3.3.4
 FROM quay.io/evl.ms/fullstaq-ruby:${RUBY_VERSION}-malloctrim-slim as base
 
 # Rails app lives here
-WORKDIR /rails
+WORKDIR /app
 
-# Set production environment
-ENV BUNDLE_DEPLOYMENT="1" \
+# Set default environment to production, can be overridden at build time
+ARG RAILS_ENV=production \
+    BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development:test" \
-    RAILS_ENV="production"
+    BUNDLE_WITHOUT="development" \
+    PATH="/usr/local/node/bin:$PATH"
+
+# Install packages needed for deployment and development
+RUN --mount=type=cache,id=dev-apt-cache,sharing=locked,target=/var/cache/apt \
+    --mount=type=cache,id=dev-apt-lib,sharing=locked,target=/var/lib/apt \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y curl libpq5 postgresql-client \
+    build-essential libpq-dev libyaml-dev node-gyp pkg-config python-is-python3 gcc make
 
 # Update gems and bundler
 RUN gem update --system --no-document && \
-    gem install -N bundler
-
+    gem install -N bundler -v 2.5.17
 
 # Throw-away build stages to reduce size of final image
 FROM base as prebuild
@@ -24,8 +31,7 @@ FROM base as prebuild
 # Install packages needed to build gems and node modules
 RUN --mount=type=cache,id=dev-apt-cache,sharing=locked,target=/var/cache/apt \
     --mount=type=cache,id=dev-apt-lib,sharing=locked,target=/var/lib/apt \
-    apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential curl libpq-dev libyaml-dev node-gyp pkg-config python-is-python3
+    apt-get install --no-install-recommends -y build-essential libpq-dev libyaml-dev node-gyp pkg-config python-is-python3 gcc make
 
 
 FROM prebuild as node
@@ -50,6 +56,8 @@ FROM prebuild as build
 # Install application gems
 COPY --link Gemfile Gemfile.lock ./
 RUN --mount=type=cache,id=bld-gem-cache,sharing=locked,target=/srv/vendor \
+    bundle config set without 'development' && \
+    bundle config set deployment 'true' && \
     bundle config set app_config .bundle && \
     bundle config set path /srv/vendor && \
     bundle install && \
@@ -60,7 +68,7 @@ RUN --mount=type=cache,id=bld-gem-cache,sharing=locked,target=/srv/vendor \
     cp -ar /srv/vendor .
 
 # Copy node modules
-COPY --from=node /rails/node_modules /rails/node_modules
+COPY --from=node /app/node_modules /app/node_modules
 COPY --from=node /usr/local/node /usr/local/node
 ENV PATH=/usr/local/node/bin:$PATH
 
@@ -70,22 +78,22 @@ COPY --link . .
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompiling assets for production without requiring secret RAILS_MASTER_KEY or REDIS_URL
+RUN SECRET_KEY_BASE_DUMMY=1 REDIS_URL=redis://dummy:6379 ./bin/rails assets:precompile;
 
 
 # Final stage for app image
 FROM base
 
-# Install packages needed for deployment
-RUN --mount=type=cache,id=dev-apt-cache,sharing=locked,target=/var/cache/apt \
-    --mount=type=cache,id=dev-apt-lib,sharing=locked,target=/var/lib/apt \
-    apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl postgresql-client
-
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
-COPY --from=build /rails /rails
+COPY --from=build /app /app
+
+# Ensure the bundle executable is available and has correct permissions
+RUN chmod +x "${BUNDLE_PATH}/bin/bundle"
+
+# Set the PATH to include the bundle executable
+ENV PATH="${BUNDLE_PATH}/bin:${PATH}"
 
 # Run and own only the runtime files as a non-root user for security
 ARG UID=1000 \
@@ -96,7 +104,7 @@ RUN groupadd -f -g $GID rails && \
 USER rails:rails
 
 # Entrypoint prepares the database.
-ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+ENTRYPOINT ["/app/bin/docker-entrypoint"]
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 80

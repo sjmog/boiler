@@ -21,14 +21,3 @@ resource "cloudflare_page_rule" "https" {
     always_use_https = true
   }
 }
-
-resource "cloudflare_zone_settings_override" "domain_settings" {
-  zone_id = data.cloudflare_zones.domain.zones[0].id
-
-  settings {
-    ssl = "full"
-    always_use_https = "on"
-    min_tls_version = "1.2"
-    automatic_https_rewrites = "on"
-  }
-}

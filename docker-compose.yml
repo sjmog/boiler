@@ -8,22 +8,30 @@ services:
         GID: ${GID:-${UID:-1000}}
     ports:
       - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
     environment:
-      - RAILS_MASTER_KEY=$RAILS_MASTER_KEY
-      - REDIS_URL=redis://redis-db:6379
-      - DATABASE_URL=postgres://root:password@postgres-db/
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://root:password@postgres/
     depends_on:
-      redis-db:
+      redis:
         condition: service_started
-      postgres-db:
+      postgres:
         condition: service_healthy
 
-  postgres-db:
-    image: postgres
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: password
     volumes:
+      - postgres_data:/var/lib/postgresql/data
       - ./tmp/db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
@@ -33,18 +41,5 @@ services:
       timeout: 5s
       retries: 30
 
-  redis-db:
-    image: redis
-
-  sidekiq:
-    build: .
-    command: bundle exec sidekiq
-    environment:
-      - RAILS_MASTER_KEY=$RAILS_MASTER_KEY
-      - REDIS_URL=redis://redis-db:6379
-      - DATABASE_URL=postgres://root:password@postgres-db/
-    depends_on:
-      redis-db:
-        condition: service_started
-      postgres-db:
-        condition: service_healthy
+volumes:
+  postgres_data:

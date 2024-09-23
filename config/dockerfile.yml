@@ -4,7 +4,6 @@
 options:
   cache: true
   compose: true
-  fullstaq: true
   parallel: true
   postgresql: true
   redis: true

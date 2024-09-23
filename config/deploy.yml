@@ -30,7 +30,7 @@ servers:
 registry:
   username: sjmog
   password:
-    - KAMAL_REGISTRY_PASSWORD
+    - REGISTRY_PASSWORD
 
 env:
   clear:

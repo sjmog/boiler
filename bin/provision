@@ -102,19 +102,5 @@ echo "Initializing Terraform..."
 terraform init
 
 # Run Terraform plan
-echo "Running Terraform plan..."
-terraform plan
-
-# Confirm before applying
-read -p "Do you want to apply the Terraform configuration? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    echo "Applying Terraform configuration..."
-    terraform apply
-else
-    echo "Terraform apply cancelled."
-    exit 0
-fi
-
-echo "Provisioning complete!"
+echo "Running Terraform apply..."
+terraform apply

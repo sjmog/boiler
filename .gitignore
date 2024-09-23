@@ -71,6 +71,8 @@ Temporary Items
 # iCloud generated files
 *.icloud
 
+/vendor/*
+
 ### Terraform ###
 # Local .terraform directories
 **/.terraform/*
