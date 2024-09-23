@@ -176,7 +176,8 @@ GEM
       bigdecimal
       rake (>= 13)
     hashie (5.0.0)
-    honeybadger (5.15.6)
+    honeybadger (5.16.0)
+      logger
     httparty (0.22.0)
       csv
       mini_mime (>= 1.0.0)
