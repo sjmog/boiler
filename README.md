@@ -45,10 +45,15 @@ You can stop the application with `Ctrl+C`, followed by `bin/stop` to shut down 
 
 ## Testing
 
-Testing is designed to be super-fast.
+Testing is designed to be super-fast and parallelised using [`parallel_tests`](https://github.com/grosser/parallel_tests).
 
-- **End-to-end tests** run in a headless browser with `bundle exec rspec spec/system`.
-- **Unit tests** run with `bundle exec rspec spec`.
+- **End-to-end/system tests** run in a headless browser with `bin/test spec/system`.
+- **Unit tests** run with `bin/test spec/<unit-you-want-to-test>_spec.rb`.
+
+Other testing things:
+
+- **Fixtures** are managed using FactoryBot, and you can find them in the `/factories` directory.
+
 
 ## Production
 

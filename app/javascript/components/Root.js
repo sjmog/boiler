@@ -22,25 +22,43 @@ export const Root = () => {
   }, []);
 
   const [searchParams] = useMemo(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return [new URLSearchParams(window.location.search)];
     }
     return [new URLSearchParams()];
   }, []);
 
   useEffect(() => {
-    if (searchParams.get('toast') === 'signed_out') {
+    if (searchParams.get("toast") === "signed_out") {
       toast({
-        title: 'Signed Out',
-        description: 'You have been successfully signed out.',
-        variant: 'default',
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+        variant: "default",
       });
-      
-      // Remove the 'toast' parameter from the URL
-      searchParams.delete('toast');
-      const newUrl = window.location.pathname + (searchParams.toString() ? '?' + searchParams.toString() : '');
-      window.history.replaceState({}, '', newUrl);
     }
+
+    if (searchParams.get("toast") === "signed_up") {
+      toast({
+        title: "Signed Up",
+        description: "You have been successfully signed up.",
+        variant: "default",
+      });
+    }
+
+    if (searchParams.get("toast") === "signed_in") {
+      toast({
+        title: "Signed In",
+        description: "You have been successfully signed in.",
+        variant: "default",
+      });
+    }
+
+    // Remove the 'toast' parameter from the URL
+    searchParams.delete("toast");
+    const newUrl =
+      window.location.pathname +
+      (searchParams.toString() ? "?" + searchParams.toString() : "");
+    window.history.replaceState({}, "", newUrl);
   }, [searchParams, toast]);
 
   useEffect(() => {

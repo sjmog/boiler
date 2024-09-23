@@ -8,6 +8,7 @@ const renderFlash = () => {
       document.getElementById("flash-toaster").dataset.flash
     );
     const rootElement = document.getElementById("flash-toaster");
+
     if (rootElement && flash) {
       const root = createRoot(rootElement);
       root.render(
@@ -19,11 +20,6 @@ const renderFlash = () => {
   } catch (e) {
     console.error(e);
   }
-};
+}
 
-const events = ["turbo:load", "DOMContentLoaded"];
-const handleEvent = () => {
-  renderFlash();
-  events.forEach((e) => document.removeEventListener(e, handleEvent));
-};
-events.forEach((event) => document.addEventListener(event, handleEvent));
+document.addEventListener("turbo:load", renderFlash);

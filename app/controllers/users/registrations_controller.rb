@@ -10,23 +10,27 @@ class Users::RegistrationsController < Devise::RegistrationsController
     # Try to find an existing user
     user = User.find_by(email: sign_up_params[:email])
 
-    if user && user.valid_password?(sign_up_params[:password])
-      # User exists and password is correct, sign them in
-      sign_in(user)
-      respond_with user, location: after_sign_in_path_for(user)
+    if user
+      if user.valid_password?(sign_up_params[:password])
+        # User exists and password is correct, sign them in
+        sign_in(user)
+        respond_with user, location: "#{after_sign_in_path_for(user)}?toast=signed_in"
+      else
+        # User exists but password is incorrect, redirect to sign in/up page
+        flash[:notice] = "Invalid email or password."
+        redirect_to new_user_session_path
+      end
     else
-      # User doesn't exist or password is incorrect, create a new user
+      # User doesn't exist, create a new user
       build_resource(sign_up_params)
       resource.save
       if resource.persisted?
         if resource.active_for_authentication?
-          set_flash_message! :notice, :signed_up
           sign_up(resource_name, resource)
-          respond_with resource, location: after_sign_up_path_for(resource)
+          respond_with resource, location: "#{after_sign_up_path_for(resource)}?toast=signed_up"
         else
-          set_flash_message! :notice, :"signed_up_but_#{resource.inactive_message}"
           expire_data_after_sign_in!
-          respond_with resource, location: after_inactive_sign_up_path_for(resource)
+          respond_with resource, location: "#{after_inactive_sign_up_path_for(resource)}?toast=signed_up_but#{resource.inactive_message}"
         end
       else
         clean_up_passwords resource
