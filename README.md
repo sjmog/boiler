@@ -1,35 +1,18 @@
 # Boiler
 
-A deployment-ready Rails 7 (Ruby 3.3.4) with React, TailwindCSS, and other goodies.
+A deployment-ready Rails 7 (Ruby 3.3.4) backend with React, TailwindCSS, and other goodies.
 
 ## Development
 
-Add the following to your `.env` file:
+1. Copy the .env.sample file to a new .env and set any required environment variables.
+2. `bundle install`.
+3. `bin/rails db:setup`.
 
-```
-REDIS_URL="redis://127.0.0.1:6379/12"
-```
+Now start the application with `bin/dev`, and stop it with `Ctrl+C` followed by `bin/stop`.
 
-> Optionally, check the .env.sample file for other environment variables you may want to set.
+> You can also run the application using `docker-compose up` to mimic production.
 
-You now have two ways to run the application: with Docker (to mimic production) and without (it's faster).
-
-To make deploys as smooth as possible, you should use Docker. But if you know what you're doing, you can use the faster, non-Docker development workflow.
-
-### With Docker
-
-Run `docker-compose up` to start the application.
-
-### Without Docker
-
-Set up the database like this:
-
-```bash
-bin/rails db:create
-bin/rails db:migrate
-```
-
-Start the application with `bin/dev`.
+### How development works
 
 `bin/dev` uses `foreman` to start the application using the `Procfile.bindev`, with the following processes:
 
@@ -40,8 +23,6 @@ Start the application with `bin/dev`.
 - `sidekiq`: Starts a Sidekiq worker for processing background jobs.
 
 > In production, the `web` process and the `redis` and `sidekiq` processes (for background jobs) live on a `web` server and an `accessory` server, respectively.
-
-You can stop the application with `Ctrl+C`, followed by `bin/stop` to shut down the redis server.
 
 ## Testing
 
@@ -54,78 +35,55 @@ Other testing things:
 
 - **Fixtures** are managed using FactoryBot, and you can find them in the `/factories` directory.
 
+## Deployment
 
-## Production
+Deployment is handled automatically when you merge using git. Boiler apps have both `staging` and `main` branches, which correspond to the environment that is provisioned for each.
 
-Boiler recommends the following deployment pipeline:
+1. When you create a Pull Request from any branch to `staging`, a preview environment is provisioned, deployed to, and tested.
+2. When you merge to `staging`, a staging environment is (re-)provisioned, and deployed to.
+3. When you merge to `main`, a production environment is (re-)provisioned, and deployed to.
 
-1. Make your changes on a branch in development.
-2. Make a Pull Request from `your-branch` to `staging`. This will trigger the PREVIEW WORKFLOW which sets up a preview environment. Tests are run against that preview environment and reported in the Pull Request.
-3. Once the Pull Request is approved, merge it into `staging`. This will trigger the STAGING_WORKFLOW which deploys the app to the staging environment.
-4. Once you are content with the staging environment, merge `staging` into `main`. This will trigger the PRODUCTION_WORKFLOW which deploys the app to the production environment.
+To enable this delicious workflow, you need to:
+
+1. Add a [`HETZNER_API_KEY` for a Hetzner Cloud project](https://www.hetzner.com/cloud), [`CLOUDFLARE_API_TOKEN` with read and modify zone permissions](https://dash.cloudflare.com/sign-up/free-trial?utm_source=boiler), [Docker Hub `REGISTRY_PASSWORD`](https://hub.docker.com/) and `GITHUB_USERNAME` to [.env](.env).
+2. If you want, update the required infrastructure in [infrastructure.yml](infrastructure.yml).
+
+You're good to go!
+
+> As a fallback, run `bin/teardown` to tear down all provisioned infrastructure. This is permanent!
+
+### Deployment workflows in detail
+
+Here's each of the deployment stages in more detail:
 
 ### PREVIEW WORKFLOW
 
-The preview workflow is triggered by a Pull Request from `your-branch` to `staging`. It:
+The preview workflow is triggered by a Pull Request from `your-branch` to `staging`. It uses a [Github Action](./.github/workflows/ci.yml) to:
 
-- Provisions a new minimum setup of infrastructure as defined in `infrastructure.yml` (by default that's two servers (one `web` for Rails and Sidekiq, another `accessories` for Redis and Postgres), a load balancer, a firewall, and a Cloudflare subdomain.)
-- Rebuilds the Docker images and pushes them to Docker Hub with the tag `your-app:preview-<branch-number>`.
-- Deploys the app to this preview environment using Kamal.
-- Runs the tests and reports the results in the Pull Request.
+- Provision a new minimum setup of infrastructure as defined in `infrastructure.yml` (by default that's two servers (one `web` for Rails and Sidekiq, another `accessories` for Redis and Postgres), a load balancer, a firewall, and a Cloudflare subdomain.)
+- Rebuild the Docker images and push them to Docker Hub with the tag `your-app:preview-<branch-number>`.
+- Deploy the app to this preview environment using Kamal.
+- Run the tests and report the results in the Pull Request.
 
-You can visit your preview environment at `https://dev-preview-<branch-number>.yourdomain.com`.
+> You can visit your preview environment at `https://preview-<branch-number>.yourdomain.com`.
 
 ### STAGING_WORKFLOW
 
-The staging workflow is triggered by merging your preview Pull Request into `staging`. It:
+The staging workflow is triggered by merging your preview Pull Request into `staging`. It uses a Github Action to:
 
-- Ensures staging environment infrastructure exists as defined in `infrastructure.yml`.
-- Rebuilds the Docker images and pushes them to Docker Hub with the tag `your-app:staging-<branch-number>`.
-- Deploys the app to this staging environment using Kamal.
-- Runs the tests and reports the results in the Pull Request.
+- Ensure staging environment infrastructure exists as defined in `infrastructure.yml`.
+- Rebuild the Docker images and push them to Docker Hub with the tag `your-app:staging-<branch-number>`.
+- Deploy the app to this staging environment using Kamal.
 
-You can visit your staging environment at `https://dev-staging.yourdomain.com`.
+> You can visit your staging environment at `https://staging.yourdomain.com`.
 
 ### PRODUCTION_WORKFLOW
 
-The production workflow is triggered by merging `staging` into `main`. It:
+The production workflow is triggered by merging `staging` into `main`. It uses a Github Action to:
 
 - Ensures production environment infrastructure exists as defined in `infrastructure.yml`.
 - Rebuilds the Docker images and pushes them to Docker Hub with the tag `your-app:latest`.
 - Deploys the app to this production environment using Kamal.
-
-### Old workflow
-
-Deployment is handled in two parts: Provisioning and Deployment.
-
-### Provisioning sets up the infrastructure
-
-1. Set up a [Hetzner Cloud](https://www.hetzner.com/cloud) account and get an API key for a project.
-2. Set up a [Cloudflare](https://dash.cloudflare.com/sign-up/free-trial?utm_source=boiler) account and get an API token.
-3. Sign up for [Docker Hub](https://hub.docker.com/) and get a username and password. Add the password to your `.env` file as `REGISTRY_PASSWORD`.
-4. Run `bin/provision` to prepare the provisioning of the app. You can speed things up by adding the following environment variables:
-
-```bash
-HETZNER_API_KEY=your-hetzner-api-key
-CLOUDFLARE_API_TOKEN=your-cloudflare-api-token
-GITHUB_USERNAME=your-github-username
-DOMAIN_NAME=your-domain-name-e.g.-techmap.app
-SUBDOMAIN=your-subdomain,-e.g.-boiler
-```
-
-> You can run `bin/provision` to add or change infrastructure any time. "It just works™"
-
-Run `bin/teardown` to tear down the infrastructure. This is permanent!
-
-> See the [terraform README](./terraform/README.md) for more.
-
-### Deployment sends your code to production
-
-To get set up for deployment:
-
-1. Get an account on [Docker Hub](https://hub.docker.com/).
-
-Run `kamal deploy` to deploy the app.
 
 # Things you might want to do
 

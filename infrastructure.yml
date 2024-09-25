@@ -1,0 +1,26 @@
+preview:
+  web: 2
+  accessories: 1
+  region: nbg1
+  server_type: cx22
+  operating_system: ubuntu-24.04
+  domain: boiler.app
+  subdomain: preview
+
+staging:
+  web: 2
+  accessories: 1
+  region: nbg1
+  server_type: cx22
+  operating_system: ubuntu-24.04
+  domain: boiler.app
+  subdomain: staging
+
+production:
+  web: 2
+  accessories: 1
+  region: nbg1
+  server_type: cx22
+  operating_system: ubuntu-24.04
+  domain: boiler.app
+  subdomain: "@"
