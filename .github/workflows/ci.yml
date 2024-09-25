@@ -2,8 +2,9 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
   push:
-    branches: [ main ]
+    branches: [ main, staging ]
 
 jobs:
   scan_ruby:
@@ -73,18 +74,19 @@ jobs:
         if: failure()
         with:
           name: screenshots
-          path: ${{ github.workspace }}/tmp/screenshots
+          path: ${{ github.workspace }}/tmp/ci/screenshots
           if-no-files-found: ignore
 
   preview:
     needs: [scan_ruby, test]
-    if: github.event_name == 'pull_request' && github.base_ref == 'staging'
+    if: github.event_name == 'pull_request' && github.base_ref == 'staging' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     env:
       HETZNER_API_KEY: ${{ secrets.HETZNER_API_KEY }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       GITHUB_USERNAME: ${{ github.actor }}
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -94,7 +96,51 @@ jobs:
           sudo chmod +x /usr/bin/yq
       - name: Provision preview environment
         run: bin/provision
-      # ... (rest of the preview job steps)
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Install Kamal
+        run: gem install kamal
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/your-app:preview-${{ github.event.pull_request.number }} .
+          echo ${{ secrets.REGISTRY_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push ${{ secrets.DOCKER_USERNAME }}/your-app:preview-${{ github.event.pull_request.number }}
+      - name: Deploy with Kamal
+        run: |
+          kamal setup -c preview
+          kamal deploy -c preview
+      - name: Run tests on preview environment
+        run: |
+          bin/rails db:create db:migrate
+          bundle exec rspec spec
+
+      - name: Keep screenshots from failed system tests
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots
+          path: ${{ github.workspace }}/tmp/preview-${{ github.event.pull_request.number }}/screenshots
+          if-no-files-found: ignore
+
+  teardown_preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.base_ref == 'staging'
+    runs-on: ubuntu-latest
+    env:
+      HETZNER_API_KEY: ${{ secrets.HETZNER_API_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      GITHUB_USERNAME: ${{ github.actor }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+      - name: Teardown preview environment
+        run: bin/teardown preview
 
   staging:
     needs: [scan_ruby, test]

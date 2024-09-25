@@ -2,13 +2,56 @@
 
 set -euo pipefail
 
-# Change to the terraform directory
-cd "$(dirname "${BASH_SOURCE[0]}")/../terraform"
+# Change to the project root directory
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 # Load environment variables from .env file if it exists
-if [ -f ../.env ]; then
-    export $(grep -v '^#' ../.env | xargs)
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
 fi
+
+# Function to read values from infrastructure.yml
+read_from_infrastructure() {
+    local environment="$1"
+    local key="$2"
+    yq eval ".$environment.$key" infrastructure.yml
+}
+
+# Determine the environment
+if [ -n "${GITHUB_REF:-}" ]; then
+    if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+        ENVIRONMENT="production"
+    elif [[ "$GITHUB_REF" == "refs/heads/staging" ]]; then
+        ENVIRONMENT="staging"
+    elif [[ "$GITHUB_REF" == refs/pull/* ]]; then
+        ENVIRONMENT="preview"
+    else
+        echo "Unknown GitHub ref: $GITHUB_REF"
+        exit 1
+    fi
+elif [ -n "${1:-}" ]; then
+    ENVIRONMENT="$1"
+else
+    read -p "Enter the environment to tear down (preview/staging/production): " ENVIRONMENT
+fi
+
+echo "Tearing down $ENVIRONMENT environment..."
+
+# Create or update terraform.tfvars for the specific environment
+cat << EOF > terraform/terraform.tfvars
+hetzner_api_key = "${HETZNER_API_KEY}"
+cloudflare_api_token = "${CLOUDFLARE_API_TOKEN}"
+region = "$(read_from_infrastructure $ENVIRONMENT region)"
+server_type = "$(read_from_infrastructure $ENVIRONMENT server_type)"
+operating_system = "$(read_from_infrastructure $ENVIRONMENT operating_system)"
+web_servers_count = $(read_from_infrastructure $ENVIRONMENT web)
+accessories_count = $(read_from_infrastructure $ENVIRONMENT accessories)
+domain_name = "$(read_from_infrastructure $ENVIRONMENT domain)"
+subdomain = "$(read_from_infrastructure $ENVIRONMENT subdomain)"
+EOF
+
+# Change to the terraform directory
+cd terraform
 
 # Initialize Terraform
 echo "Initializing Terraform..."
@@ -18,4 +61,4 @@ terraform init
 echo "Running Terraform destroy..."
 terraform destroy -auto-approve
 
-echo "Teardown complete!"
+echo "$ENVIRONMENT environment has been torn down."

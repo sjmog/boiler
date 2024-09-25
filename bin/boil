@@ -58,7 +58,9 @@ prompt_with_instructions "CLOUDFLARE_API_TOKEN" "Enter your Cloudflare API Token
 
 prompt_with_instructions "GITHUB_USERNAME" "Enter your GitHub username" "This is used for SSH key import in the cloud-init configuration."
 
-prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry password" "This is used for pushing and pulling Docker images. Create an account at https://hub.docker.com/ if you don't have one."
+prompt_with_instructions "DOCKER_USERNAME" "Enter your Docker Hub username" "This is used for pushing and pulling Docker images. Create an account at https://hub.docker.com/ if you don't have one."
+
+prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry password" "This is used for pushing and pulling Docker images."
 
 # Prompt for domain and subdomain and update infrastructure.yml
 domain=$(prompt_with_instructions "DOMAIN_NAME" "Enter your domain name" "This is the domain you'll use for your application, e.g., 'example.com'" "boiler.app")
@@ -73,14 +75,14 @@ echo "Domain and subdomain have been updated in infrastructure.yml"
 # Set up GitHub secrets
 if command -v gh &> /dev/null; then
     echo "Setting up GitHub secrets..."
-    for secret in HETZNER_API_KEY CLOUDFLARE_API_TOKEN REGISTRY_PASSWORD; do
+    for secret in HETZNER_API_KEY CLOUDFLARE_API_TOKEN REGISTRY_PASSWORD DOCKER_USERNAME; do
         value=$(grep "^$secret=" .deployment.env | cut -d '=' -f2-)
         echo "Setting $secret as a GitHub secret..."
         echo "$value" | gh secret set "$secret"
     done
 else
     echo "GitHub CLI (gh) is not installed. Skipping GitHub secrets setup."
-    echo "To set up GitHub secrets later, install gh CLI and run 'gh secret set' for HETZNER_API_KEY, CLOUDFLARE_API_TOKEN, and REGISTRY_PASSWORD."
+    echo "To set up GitHub secrets later, install gh CLI and run 'gh secret set' for HETZNER_API_KEY, CLOUDFLARE_API_TOKEN, REGISTRY_PASSWORD, and DOCKER_USERNAME."
 fi
 
 # Install dependencies
