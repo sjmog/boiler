@@ -54,6 +54,13 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Initialize test databases
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          REDIS_URL: redis://localhost:6379/0
+        run: bin/rails db:test:prepare
+
       - name: Run tests
         env:
           RAILS_ENV: test
