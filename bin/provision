@@ -2,73 +2,51 @@
 
 set -euo pipefail
 
-# Change to the terraform directory
-cd "$(dirname "${BASH_SOURCE[0]}")/../terraform"
+# Change to the project root directory
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 # Load environment variables from .env file if it exists
-if [ -f ../.env ]; then
-    export $(grep -v '^#' ../.env | xargs)
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
 fi
 
-# Function to prompt for input with default value
-prompt_with_default() {
-    local prompt="$1"
-    local default="$2"
-    local var_name="$3"
-    local hint="${4:-}"  # Use empty string if $4 is not provided
+# Function to read values from infrastructure.yml
+read_from_infrastructure() {
+    local environment="$1"
+    local key="$2"
+    yq eval ".$environment.$key" infrastructure.yml
+}
 
-    if [ -n "$hint" ]; then
-        prompt="$prompt ($hint)"
+# Determine the environment
+if [ -n "${GITHUB_REF:-}" ]; then
+    if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+        ENVIRONMENT="production"
+    elif [[ "$GITHUB_REF" == "refs/heads/staging" ]]; then
+        ENVIRONMENT="staging"
+    elif [[ "$GITHUB_REF" == refs/pull/* ]]; then
+        ENVIRONMENT="preview"
+    else
+        echo "Unknown GitHub ref: $GITHUB_REF"
+        exit 1
     fi
-
-    read -p "$prompt [$default]: " input
-    input="${input:-$default}"
-    echo "$var_name = \"$input\"" >> terraform.tfvars
-}
-
-# Function to prompt for required input
-prompt_required() {
-    local prompt="$1"
-    local var_name="$2"
-    local hint="${3:-}"  # Use empty string if $3 is not provided
-    local default="${4:-}"  # Use empty string if $4 is not provided
-
-    while true; do
-        if [ -n "$hint" ]; then
-            prompt="$prompt ($hint)"
-        fi
-        if [ -n "$default" ]; then
-            read -p "$prompt [$default]: " input
-            input="${input:-$default}"
-        else
-            read -p "$prompt: " input
-        fi
-        if [ -n "$input" ]; then
-            echo "$var_name = \"$input\"" >> terraform.tfvars
-            break
-        else
-            echo "This field is required. Please try again."
-        fi
-    done
-}
+else
+    read -p "Enter the environment (preview/staging/production): " ENVIRONMENT
+fi
 
 # Create or update terraform.tfvars
-> terraform.tfvars
+cat << EOF > terraform/terraform.tfvars
+hetzner_api_key = "${HETZNER_API_KEY}"
+cloudflare_api_token = "${CLOUDFLARE_API_TOKEN}"
+region = "$(read_from_infrastructure $ENVIRONMENT region)"
+server_type = "$(read_from_infrastructure $ENVIRONMENT server_type)"
+operating_system = "$(read_from_infrastructure $ENVIRONMENT operating_system)"
+web_servers_count = $(read_from_infrastructure $ENVIRONMENT web)
+accessories_count = $(read_from_infrastructure $ENVIRONMENT accessories)
+domain_name = "$(read_from_infrastructure $ENVIRONMENT domain)"
+subdomain = "$(read_from_infrastructure $ENVIRONMENT subdomain)"
+EOF
 
-# Prompt for Hetzner API key
-prompt_required "Enter your Hetzner API key" "hetzner_api_key" "" "${HETZNER_API_KEY:-}"
-
-# Prompt for other variables
-prompt_with_default "Enter the region" "nbg1" "region"
-prompt_with_default "Enter the server type" "cx22" "server_type"
-prompt_with_default "Enter the operating system" "ubuntu-24.04" "operating_system"
-prompt_with_default "Enter the number of web servers" "1" "web_servers_count"
-prompt_with_default "Enter the number of accessories" "1" "accessories_count"
-prompt_required "Enter your Cloudflare API token" "cloudflare_api_token" "" "${CLOUDFLARE_API_TOKEN:-}"
-prompt_required "Enter your domain name" "domain_name" "e.g. techmap.app"
-prompt_required "Enter your subdomain" "subdomain" "e.g. www, or @ for apex"
-
-echo "terraform.tfvars created/updated with your configuration."
+echo "terraform.tfvars created/updated with configuration from infrastructure.yml"
 
 # Generate SSH key
 ssh_key_path="$HOME/.ssh/hetzner"
@@ -82,25 +60,25 @@ fi
 
 # Update cloudinit/base.yml with user's GitHub username
 github_username="${GITHUB_USERNAME:-}"
-while true; do
-    if [ -z "$github_username" ]; then
-        read -p "Enter your GitHub username: " github_username
-    fi
-    if [ -n "$github_username" ]; then
-        # Use perl instead of sed for better cross-platform compatibility
-        perl -i -pe "s/gh:sjmog/gh:$github_username/" ./cloudinit/base.yml
-        echo "Updated cloudinit/base.yml with your GitHub username for SSH key import."
-        break
-    else
-        echo "GitHub username cannot be empty. Please try again."
-        github_username=""
-    fi
-done
+if [ -z "$github_username" ]; then
+    read -p "Enter your GitHub username: " github_username
+fi
+if [ -n "$github_username" ]; then
+    # Use perl instead of sed for better cross-platform compatibility
+    perl -i -pe "s/gh:sjmog/gh:$github_username/" terraform/cloudinit/base.yml
+    echo "Updated cloudinit/base.yml with your GitHub username for SSH key import."
+else
+    echo "GitHub username is required. Please set the GITHUB_USERNAME environment variable or enter it when prompted."
+    exit 1
+fi
+
+# Change to the terraform directory
+cd terraform
 
 # Initialize Terraform
 echo "Initializing Terraform..."
 terraform init
 
-# Run Terraform plan
+# Run Terraform apply
 echo "Running Terraform apply..."
 terraform apply

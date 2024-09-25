@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Change to the project root directory
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+echo "Setting up the repository and preparing the application for development..."
+
+# Check if yq is installed, if not, install it
+if ! command -v yq &> /dev/null; then
+    echo "yq is not installed. Installing it now..."
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install yq
+    else
+        echo "Unsupported operating system. Please install yq manually: https://github.com/mikefarah/yq#install"
+        exit 1
+    fi
+fi
+
+# Function to prompt for input with instructions
+prompt_with_instructions() {
+    local var_name="$1"
+    local prompt="$2"
+    local instructions="$3"
+    local default="${4:-}"
+
+    echo
+    echo "$prompt"
+    echo "$instructions"
+    if [ -n "$default" ]; then
+        read -p "Enter $var_name [$default]: " input
+        input="${input:-$default}"
+    else
+        read -p "Enter $var_name: " input
+    fi
+    echo "$var_name=$input" >> .deployment.env
+}
+
+# Function to update infrastructure.yml
+update_infrastructure() {
+    local key="$1"
+    local value="$2"
+    yq eval ".production.$key = \"$value\"" -i infrastructure.yml
+    yq eval ".staging.$key = \"$value\"" -i infrastructure.yml
+    yq eval ".preview.$key = \"$value\"" -i infrastructure.yml
+}
+
+# Create or clear .deployment.env file
+> .deployment.env
+
+# Prompt for environment variables
+prompt_with_instructions "HETZNER_API_KEY" "Enter your Hetzner API Key" "To obtain this, go to https://console.hetzner.cloud/projects, select your project, and create an API token."
+
+prompt_with_instructions "CLOUDFLARE_API_TOKEN" "Enter your Cloudflare API Token" "To obtain this, go to https://dash.cloudflare.com/profile/api-tokens and create a token with the necessary permissions."
+
+prompt_with_instructions "GITHUB_USERNAME" "Enter your GitHub username" "This is used for SSH key import in the cloud-init configuration."
+
+prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry password" "This is used for pushing and pulling Docker images. Create an account at https://hub.docker.com/ if you don't have one."
+
+# Prompt for domain and subdomain and update infrastructure.yml
+domain=$(prompt_with_instructions "DOMAIN_NAME" "Enter your domain name" "This is the domain you'll use for your application, e.g., 'example.com'" "boiler.app")
+update_infrastructure "domain" "$domain"
+
+subdomain=$(prompt_with_instructions "SUBDOMAIN" "Enter your subdomain" "This is the subdomain for your application, use '@' for apex domain" "@")
+update_infrastructure "subdomain" "$subdomain"
+
+echo "Depoloyment secrets have been saved to .deployment.env"
+echo "Domain and subdomain have been updated in infrastructure.yml"
+
+# Set up GitHub secrets
+if command -v gh &> /dev/null; then
+    echo "Setting up GitHub secrets..."
+    for secret in HETZNER_API_KEY CLOUDFLARE_API_TOKEN REGISTRY_PASSWORD; do
+        value=$(grep "^$secret=" .deployment.env | cut -d '=' -f2-)
+        echo "Setting $secret as a GitHub secret..."
+        echo "$value" | gh secret set "$secret"
+    done
+else
+    echo "GitHub CLI (gh) is not installed. Skipping GitHub secrets setup."
+    echo "To set up GitHub secrets later, install gh CLI and run 'gh secret set' for HETZNER_API_KEY, CLOUDFLARE_API_TOKEN, and REGISTRY_PASSWORD."
+fi
+
+# Install dependencies
+echo "Installing Ruby dependencies..."
+bundle install
+
+echo "Installing JavaScript dependencies..."
+yarn install
+
+# Set up the database
+echo "Setting up the database..."
+bin/rails db:setup
+
+echo "Setup complete! You can now start the application with 'bin/dev'."
+echo "To stop the application, use 'Ctrl+C' followed by 'bin/stop'."

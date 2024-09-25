@@ -2,19 +2,19 @@
 
 A deployment-ready Rails 7 (Ruby 3.3.4) backend with React, TailwindCSS, and other goodies.
 
+## Getting started
+
+Run `bin/boil` and follow the instructions. You'll need a Hetzner Cloud account, a Cloudflare account, a Docker Hub account, and a GitHub account.
+
 ## Development
 
-1. Copy the .env.sample file to a new .env and set any required environment variables.
-2. `bundle install`.
-3. `bin/rails db:setup`.
-
-Now start the application with `bin/dev`, and stop it with `Ctrl+C` followed by `bin/stop`.
+Start the application with `bin/dev`. Stop it with `Ctrl+C` followed by `bin/stop`.
 
 > You can also run the application using `docker-compose up` to mimic production.
 
 ### How development works
 
-`bin/dev` uses `foreman` to start the application using the `Procfile.bindev`, with the following processes:
+`bin/dev` uses `foreman` to start the application using the `Procfile.dev`, with the following processes:
 
 - `web`: the Rails server (with debugging enabled).
 - `js`: uses `yarn` to build JavaScript files (such as [React components](./app/javascript/components)). Auto-rebuilds on file changes.
@@ -26,7 +26,7 @@ Now start the application with `bin/dev`, and stop it with `Ctrl+C` followed by 
 
 ## Testing
 
-Testing is designed to be super-fast and parallelised using [`parallel_tests`](https://github.com/grosser/parallel_tests).
+Run super-fast tests with `bin/test (thing you want to test)`.
 
 - **End-to-end/system tests** run in a headless browser with `bin/test spec/system`.
 - **Unit tests** run with `bin/test spec/<unit-you-want-to-test>_spec.rb`.
