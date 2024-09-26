@@ -46,6 +46,15 @@ jobs:
       - name: Install packages
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client
 
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -56,15 +65,6 @@ jobs:
 
       - name: Build assets
         run: bin/rails assets:precompile
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
 
       - name: Initialize test databases
         env:
