@@ -49,22 +49,24 @@ RSpec.describe "User Authentication", type: :system, js: true do
     expect(page).to have_content("Invalid email or password")
   end
 
-  scenario "User can sign in with Google" do
-    visit new_user_registration_path
+  # To enable these scenarios, add the requisite ENV variables (see .env.example)
+  # To enable them in CI, ensure Github has the requisite secrets set too.
+  # scenario "User can sign in with Google" do
+  #   visit new_user_registration_path
 
-    click_button "Sign in with Google"
+  #   click_button "Sign in with Google"
 
-    expect(page).to have_button("sign out")
-    expect(page).to have_current_path(root_path)
-  end
+  #   expect(page).to have_button("sign out")
+  #   expect(page).to have_current_path(root_path)
+  # end
 
-  scenario "Handling a Google authentication error" do
-    OmniAuth.config.mock_auth[:google_oauth2] = :invalid_credentials
+  # scenario "Handling a Google authentication error" do
+  #   OmniAuth.config.mock_auth[:google_oauth2] = :invalid_credentials
 
-    visit new_user_registration_path
+  #   visit new_user_registration_path
 
-    click_button "Sign in with Google"
+  #   click_button "Sign in with Google"
 
-    expect(page).to have_content("Invalid credentials")
-  end
+  #   expect(page).to have_content("Invalid credentials")
+  # end
 end
