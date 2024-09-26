@@ -46,6 +46,17 @@ jobs:
       - name: Install packages
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client
 
+      +- name: Set up Node.js
+      +  uses: actions/setup-node@v3
+      +  with:
+      +    node-version: '20.11.1'
+
+      +- name: Install JavaScript dependencies
+      +  run: yarn install
+
+      - name: Build assets
+        run: bin/rails assets:precompile
+
       - name: Checkout code
         uses: actions/checkout@v4
 
