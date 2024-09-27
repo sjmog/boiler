@@ -5,7 +5,7 @@ preview:
   server_type: cx22
   operating_system: ubuntu-24.04
   domain: techmap.app
-  subdomain: dev
+  subdomain: dev.preview
 staging:
   web: 2
   accessories: 1
@@ -13,7 +13,7 @@ staging:
   server_type: cx22
   operating_system: ubuntu-24.04
   domain: techmap.app
-  subdomain: dev
+  subdomain: dev.staging
 production:
   web: 2
   accessories: 1

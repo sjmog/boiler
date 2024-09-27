@@ -26,7 +26,7 @@ prompt_with_instructions() {
     local prompt="$2"
     local instructions="$3"
     local default="${4:-}"
-    local hidden="${5:-false}"  # {{ edit_1 }} Added 'hidden' parameter
+    local hidden="${5:-false}"
     local capture_to_env="${6:-true}"
 
     # Redirect prompt messages to stderr to prevent them from being captured
@@ -64,9 +64,16 @@ prompt_with_instructions() {
 update_infrastructure() {
     local key="$1"
     local value="$2"
-    yq eval ".production.$key = \"$value\"" -i infrastructure.yml
-    yq eval ".staging.$key = \"$value\"" -i infrastructure.yml
-    yq eval ".preview.$key = \"$value\"" -i infrastructure.yml
+    local append_environment="${3:-false}" 
+    if [ "$append_environment" = true ]; then
+        yq eval ".production.$key = \"$value\"" -i infrastructure.yml
+        yq eval ".staging.$key = \"$value.staging\"" -i infrastructure.yml
+        yq eval ".preview.$key = \"$value.preview\"" -i infrastructure.yml
+    else
+        yq eval ".production.$key = \"$value\"" -i infrastructure.yml
+        yq eval ".staging.$key = \"$value\"" -i infrastructure.yml
+        yq eval ".preview.$key = \"$value\"" -i infrastructure.yml
+    fi
 }
 
 # Create or clear .deployment.env file
@@ -85,10 +92,10 @@ prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry pas
 
 # Prompt for domain and subdomain and update infrastructure.yml
 domain=$(prompt_with_instructions "DOMAIN_NAME" "Enter your domain name" "This is the domain you'll use for your application, e.g., 'example.com'" "boiler.app" "" false false)
-update_infrastructure "domain" "$domain"
+update_infrastructure "domain" "$domain" false
 
 subdomain=$(prompt_with_instructions "SUBDOMAIN" "Enter your subdomain" "This is the subdomain for your application, use '@' for apex domain" "@" "" false false)
-update_infrastructure "subdomain" "$subdomain"
+update_infrastructure "subdomain" "$subdomain" true
 
 echo "Depoloyment secrets have been saved to .deployment.env"
 echo "Domain and subdomain have been updated in infrastructure.yml"
