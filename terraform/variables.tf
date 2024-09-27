@@ -48,3 +48,20 @@ variable "subdomain" {
   description = "Your subdomain, e.g. www (use @ if you want the apex domain)"
   type        = string
 }
+
+variable "ssh_key_name" {
+  description = "Name of the SSH key"
+  default     = "boiler-ssh-key"
+}
+
+variable "network_name" {
+  description = "Name of the network"
+  default     = "boiler-network"
+}
+
+variable "load_balancer_name" {
+  description = "Name of the load balancer"
+  default     = "boiler-lb"
+}
+
+# Add similar variables for firewalls and other resources

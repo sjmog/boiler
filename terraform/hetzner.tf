@@ -1,11 +1,27 @@
-resource "hcloud_ssh_key" "ssh_key_for_hetzner" {
-  name       = "ssh-key-for-hetzner"
-  public_key = file("~/.ssh/hetzner.pub")
+# Check if SSH key already exists
+data "hcloud_ssh_key" "existing_ssh_key" {
+  count = var.ssh_key_name != "" ? 1 : 0
+  name  = var.ssh_key_name
 }
 
+# Create SSH key only if it doesn't exist
+resource "hcloud_ssh_key" "ssh_key_for_hetzner" {
+  count      = var.ssh_key_name != "" && length(data.hcloud_ssh_key.existing_ssh_key) == 0 ? 1 : 0
+  name       = var.ssh_key_name
+  public_key = file(var.ssh_public_key_path)
+}
+
+# Check if network already exists
+data "hcloud_network" "existing_network" {
+  count = var.network_name != "" ? 1 : 0
+  name  = var.network_name
+}
+
+# Create network only if it doesn't exist
 resource "hcloud_network" "network" {
-  name     = "private-network"
-  ip_range = "10.0.0.0/16"
+  count    = var.network_name != "" && length(data.hcloud_network.existing_network) == 0 ? 1 : 0
+  name     = var.network_name
+  ip_range = var.network_ip_range
 }
 
 resource "hcloud_network_subnet" "network_subnet" {
@@ -79,10 +95,16 @@ resource "hcloud_server" "accessories" {
   ]
 }
 
+# Example for load balancer
+data "hcloud_load_balancer" "existing_lb" {
+  count = var.load_balancer_name != "" ? 1 : 0
+  name  = var.load_balancer_name
+}
+
 resource "hcloud_load_balancer" "web_load_balancer" {
-  count              = var.web_servers_count > 1 ? 1 : 0
-  name               = "web-load-balancer"
-  load_balancer_type = "lb11"
+  count              = var.load_balancer_name != "" && length(data.hcloud_load_balancer.existing_lb) == 0 ? 1 : 0
+  name               = var.load_balancer_name
+  load_balancer_type = var.load_balancer_type
   location           = var.region
 }
 
