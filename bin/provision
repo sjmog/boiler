@@ -56,6 +56,9 @@ export TF_VAR_subdomain="$(read_from_infrastructure $ENVIRONMENT subdomain)"
 export TF_VAR_ssh_key_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-ssh-key-${ENVIRONMENT}"
 export TF_VAR_network_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-network-${ENVIRONMENT}"
 export TF_VAR_load_balancer_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-lb-${ENVIRONMENT}"
+export TF_VAR_firewall_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-firewall-${ENVIRONMENT}"
+export TF_VAR_web_server_prefix="${TF_VAR_subdomain}.${TF_VAR_domain_name}-${ENVIRONMENT}"
+export TF_VAR_accessories_server_prefix="${TF_VAR_subdomain}.${TF_VAR_domain_name}-${ENVIRONMENT}"
 
 echo "Terraform variables exported as environment variables"
 

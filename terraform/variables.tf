@@ -52,31 +52,35 @@ variable "subdomain" {
 variable "ssh_key_name" {
   description = "Name of the SSH key"
   default     = "boiler-ssh-key"
+  type        = string
 }
 
 variable "network_name" {
   description = "Name of the network"
   default     = "boiler-network"
+  type        = string
 }
 
 variable "load_balancer_name" {
   description = "Name of the load balancer"
   default     = "boiler-lb"
-}
-
-# Add similar variables for firewalls and other resources
-
-variable "ssh_key_name" {
-  description = "Name of the SSH key"
   type        = string
 }
 
-variable "network_name" {
-  description = "Name of the network"
+variable "firewall_name" {
+  description = "Name of the firewall"
+  default     = "boiler-firewall"
   type        = string
 }
 
-variable "load_balancer_name" {
-  description = "Name of the load balancer"
+variable "web_server_prefix" {
+  description = "Prefix for the web server"
+  default     = "boiler"
+  type        = string
+}
+
+variable "accessories_server_prefix" {
+  description = "Prefix for the accessories server"
+  default     = "boiler"
   type        = string
 }
