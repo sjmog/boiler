@@ -65,3 +65,18 @@ variable "load_balancer_name" {
 }
 
 # Add similar variables for firewalls and other resources
+
+variable "ssh_key_name" {
+  description = "Name of the SSH key"
+  type        = string
+}
+
+variable "network_name" {
+  description = "Name of the network"
+  type        = string
+}
+
+variable "load_balancer_name" {
+  description = "Name of the load balancer"
+  type        = string
+}

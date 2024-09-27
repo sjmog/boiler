@@ -33,6 +33,15 @@ else
     read -p "Enter the environment (preview/staging/production): " ENVIRONMENT
 fi
 
+# Check if infrastructure.yml or relevant secrets have changed
+if git diff --name-only HEAD HEAD~1 | grep -E '(^infrastructure\.yml$|^terraform$)'; then
+    SHOULD_PROVISION=true
+else
+    SHOULD_PROVISION=false
+    echo "No changes detected in infrastructure.yml or relevant configurations. Skipping provisioning."
+    exit 0
+fi
+
 # Export Terraform variables as environment variables
 export TF_VAR_hetzner_api_key="${HETZNER_API_KEY}"
 export TF_VAR_cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
@@ -43,7 +52,6 @@ export TF_VAR_web_servers_count=$(read_from_infrastructure $ENVIRONMENT web)
 export TF_VAR_accessories_count=$(read_from_infrastructure $ENVIRONMENT accessories)
 export TF_VAR_domain_name="$(read_from_infrastructure $ENVIRONMENT domain)"
 export TF_VAR_subdomain="$(read_from_infrastructure $ENVIRONMENT subdomain)"
-
 
 export TF_VAR_ssh_key_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-ssh-key-${ENVIRONMENT}"
 export TF_VAR_network_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-network-${ENVIRONMENT}"
