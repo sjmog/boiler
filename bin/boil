@@ -26,26 +26,54 @@ prompt_with_instructions() {
     local prompt="$2"
     local instructions="$3"
     local default="${4:-}"
+    local hidden="${5:-false}"
+    local capture_to_env="${6:-true}"
 
-    echo
-    echo "$prompt"
-    echo "$instructions"
-    if [ -n "$default" ]; then
-        read -p "Enter $var_name [$default]: " input
-        input="${input:-$default}"
+    # Redirect prompt messages to stderr to prevent them from being captured
+    echo >&2
+    echo >&2 "$prompt"
+    echo >&2 "$instructions"
+    
+    if [ "$hidden" = true ]; then
+        if [ -n "$default" ]; then
+            read -s -p "Enter $var_name [$default]: " input
+            echo >&2
+            input="${input:-$default}"
+        else
+            read -s -p "Enter $var_name: " input
+            echo >&2
+        fi
+        if [ "$capture_to_env" = true ]; then
+            echo "$var_name=$input" >> .deployment.env
+        fi
     else
-        read -p "Enter $var_name: " input
+        if [ -n "$default" ]; then
+            read -p "Enter $var_name [$default]: " input
+            input="${input:-$default}"
+        else
+            read -p "Enter $var_name: " input
+        fi
+        if [ "$capture_to_env" = true ]; then
+            echo "$var_name=$input" >> .deployment.env
+        fi
+        printf "%s" "$input" | tr -d '\n'
     fi
-    echo "$var_name=$input" >> .deployment.env
 }
 
 # Function to update infrastructure.yml
 update_infrastructure() {
     local key="$1"
     local value="$2"
-    yq eval ".production.$key = \"$value\"" -i infrastructure.yml
-    yq eval ".staging.$key = \"$value\"" -i infrastructure.yml
-    yq eval ".preview.$key = \"$value\"" -i infrastructure.yml
+    local append_environment="${3:-false}" 
+    if [ "$append_environment" = true ]; then
+        yq eval ".production.$key = \"$value\"" -i infrastructure.yml
+        yq eval ".staging.$key = \"$value.staging\"" -i infrastructure.yml
+        yq eval ".preview.$key = \"$value.preview\"" -i infrastructure.yml
+    else
+        yq eval ".production.$key = \"$value\"" -i infrastructure.yml
+        yq eval ".staging.$key = \"$value\"" -i infrastructure.yml
+        yq eval ".preview.$key = \"$value\"" -i infrastructure.yml
+    fi
 }
 
 # Create or clear .deployment.env file
@@ -60,30 +88,62 @@ prompt_with_instructions "GITHUB_USERNAME" "Enter your GitHub username" "This is
 
 prompt_with_instructions "DOCKER_USERNAME" "Enter your Docker Hub username" "This is used for pushing and pulling Docker images. Create an account at https://hub.docker.com/ if you don't have one."
 
-prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry password" "This is used for pushing and pulling Docker images."
+prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry password" "This is used for pushing and pulling Docker images." "" true  # {{ edit_5 }} Enable hidden input for password
 
 # Prompt for domain and subdomain and update infrastructure.yml
-domain=$(prompt_with_instructions "DOMAIN_NAME" "Enter your domain name" "This is the domain you'll use for your application, e.g., 'example.com'" "boiler.app")
-update_infrastructure "domain" "$domain"
+domain=$(prompt_with_instructions "DOMAIN_NAME" "Enter your domain name" "This is the domain you'll use for your application, e.g., 'example.com'" "boiler.app" "" false false)
+update_infrastructure "domain" "$domain" false
 
-subdomain=$(prompt_with_instructions "SUBDOMAIN" "Enter your subdomain" "This is the subdomain for your application, use '@' for apex domain" "@")
-update_infrastructure "subdomain" "$subdomain"
+subdomain=$(prompt_with_instructions "SUBDOMAIN" "Enter your subdomain" "This is the subdomain for your application, use '@' for apex domain" "@" "" false false)
+update_infrastructure "subdomain" "$subdomain" true
 
 echo "Depoloyment secrets have been saved to .deployment.env"
 echo "Domain and subdomain have been updated in infrastructure.yml"
 
-# Set up GitHub secrets
-if command -v gh &> /dev/null; then
-    echo "Setting up GitHub secrets..."
-    for secret in HETZNER_API_KEY CLOUDFLARE_API_TOKEN REGISTRY_PASSWORD DOCKER_USERNAME; do
-        value=$(grep "^$secret=" .deployment.env | cut -d '=' -f2-)
-        echo "Setting $secret as a GitHub secret..."
-        echo "$value" | gh secret set "$secret"
-    done
-else
-    echo "GitHub CLI (gh) is not installed. Skipping GitHub secrets setup."
-    echo "To set up GitHub secrets later, install gh CLI and run 'gh secret set' for HETZNER_API_KEY, CLOUDFLARE_API_TOKEN, REGISTRY_PASSWORD, and DOCKER_USERNAME."
+# Function to install gh CLI
+install_gh_cli() {
+    echo "GitHub CLI (gh) is not installed. Installing it now..."
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+        && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+        && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+        && sudo apt update \
+        && sudo apt install gh -y
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install gh
+    else
+        echo "Unsupported operating system. Please install GitHub CLI manually: https://github.com/cli/cli#installation"
+        exit 1
+    fi
+}
+
+# Ensure gh CLI is installed
+if ! command -v gh &> /dev/null; then
+    install_gh_cli
 fi
+
+# Check if user is logged in to GitHub
+if ! gh auth status &> /dev/null; then
+    echo "You are not logged in to GitHub. Please log in now."
+    gh auth login -w
+fi
+
+# Verify login was successful
+if ! gh auth status &> /dev/null; then
+    echo "GitHub login failed. Please try again manually using 'gh auth login'."
+    exit 1
+fi
+
+# Set up GitHub secrets
+echo "Setting up GitHub secrets..."
+for secret in HETZNER_API_KEY CLOUDFLARE_API_TOKEN REGISTRY_PASSWORD DOCKER_USERNAME; do
+    value=$(grep "^$secret=" .deployment.env | cut -d '=' -f2-)
+    echo "Setting $secret as a GitHub secret..."
+    echo "$value" | gh secret set "$secret"
+done
+
+echo "GitHub secrets have been set successfully."
 
 # Install dependencies
 echo "Installing Ruby dependencies..."

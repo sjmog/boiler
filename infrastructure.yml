@@ -4,31 +4,21 @@ preview:
   region: nbg1
   server_type: cx22
   operating_system: ubuntu-24.04
-  domain: |-
-    Enter your domain name
-    This is the domain you'll use for your application, e.g., 'example.com'
-  subdomain: |2-
-    Enter your subdomain
-    This is the subdomain for your application, use '@' for apex domain
+  domain: techmap.app
+  subdomain: dev.preview
 staging:
   web: 2
   accessories: 1
   region: nbg1
   server_type: cx22
   operating_system: ubuntu-24.04
-  domain: |-
-    Enter your domain name
-    This is the domain you'll use for your application, e.g., 'example.com'
-  subdomain: |-
-    Enter your subdomain
-    This is the subdomain for your application, use '@' for apex domain
+  domain: techmap.app
+  subdomain: dev.staging
 production:
   web: 2
   accessories: 1
   region: nbg1
   server_type: cx22
   operating_system: ubuntu-24.04
-  domain: |-
-    Enter your domain name
-    This is the domain you'll use for your application, e.g., 'example.com'
-  subdomain: "\nEnter your subdomain\nThis is the subdomain for your application, use '@' for apex domain"
+  domain: techmap.app
+  subdomain: "dev"

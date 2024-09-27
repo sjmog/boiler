@@ -1,10 +1,10 @@
 resource "hcloud_ssh_key" "ssh_key_for_hetzner" {
-  name       = "ssh-key-for-hetzner"
+  name       = var.ssh_key_name
   public_key = file("~/.ssh/hetzner.pub")
 }
 
 resource "hcloud_network" "network" {
-  name     = "private-network"
+  name     = var.network_name
   ip_range = "10.0.0.0/16"
 }
 
@@ -17,7 +17,7 @@ resource "hcloud_network_subnet" "network_subnet" {
 
 resource "hcloud_server" "web" {
   count       = var.web_servers_count
-  name        = var.web_servers_count > 1 ? "web-${count.index + 1}" : "web"
+  name        = var.web_servers_count > 1 ? "${var.web_server_prefix}-web-${count.index + 1}" : "${var.web_server_prefix}-web"
   image       = var.operating_system
   server_type = var.server_type
   location    = var.region
@@ -49,7 +49,7 @@ resource "hcloud_server" "web" {
 
 resource "hcloud_server" "accessories" {
   count       = var.accessories_count
-  name        = var.accessories_count > 1 ? "accessories-${count.index + 1}" : "accessories"
+  name        = var.accessories_count > 1 ? "${var.accessories_server_prefix}-accessories-${count.index + 1}" : "${var.accessories_server_prefix}-accessories"
   image       = var.operating_system
   server_type = var.server_type
   location    = var.region
@@ -81,7 +81,7 @@ resource "hcloud_server" "accessories" {
 
 resource "hcloud_load_balancer" "web_load_balancer" {
   count              = var.web_servers_count > 1 ? 1 : 0
-  name               = "web-load-balancer"
+  name               = var.load_balancer_name
   load_balancer_type = "lb11"
   location           = var.region
 }
@@ -132,8 +132,8 @@ resource "hcloud_load_balancer_network" "load_balancer_network" {
   ]
 }
 
-resource "hcloud_firewall" "block_all_except_ssh" {
-  name = "allow-ssh"
+resource "hcloud_firewall" "allow_ssh" {
+  name = "${var.firewall_name}-allow-ssh"
   rule {
     direction = "in"
     protocol  = "tcp"
@@ -150,7 +150,7 @@ resource "hcloud_firewall" "block_all_except_ssh" {
 }
 
 resource "hcloud_firewall" "allow_http_https_from_cloudflare" {
-  name = "allow-http-https-from-cloudflare"
+  name = "${var.firewall_name}-allow-http-https-from-cloudflare"
   rule {
     direction = "in"
     protocol  = "icmp"
@@ -215,8 +215,8 @@ resource "hcloud_firewall" "allow_http_https_from_cloudflare" {
   }
 }
 
-resource "hcloud_firewall" "block_all_inboud_traffic" {
-  name = "block-inboud_traffic"
+resource "hcloud_firewall" "block_all_inbound_traffic" {
+  name = "${var.firewall_name}-block-inbound-traffic"
   # Empty rule blocks all inbound traffic
   apply_to {
     label_selector = "ssh=no"

@@ -48,3 +48,39 @@ variable "subdomain" {
   description = "Your subdomain, e.g. www (use @ if you want the apex domain)"
   type        = string
 }
+
+variable "ssh_key_name" {
+  description = "Name of the SSH key"
+  default     = "boiler-ssh-key"
+  type        = string
+}
+
+variable "network_name" {
+  description = "Name of the network"
+  default     = "boiler-network"
+  type        = string
+}
+
+variable "load_balancer_name" {
+  description = "Name of the load balancer"
+  default     = "boiler-lb"
+  type        = string
+}
+
+variable "firewall_name" {
+  description = "Name of the firewall"
+  default     = "boiler-firewall"
+  type        = string
+}
+
+variable "web_server_prefix" {
+  description = "Prefix for the web server"
+  default     = "boiler"
+  type        = string
+}
+
+variable "accessories_server_prefix" {
+  description = "Prefix for the accessories server"
+  default     = "boiler"
+  type        = string
+}

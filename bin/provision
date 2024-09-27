@@ -33,20 +33,25 @@ else
     read -p "Enter the environment (preview/staging/production): " ENVIRONMENT
 fi
 
-# Create or update terraform.tfvars
-cat << EOF > terraform/terraform.tfvars
-hetzner_api_key = "${HETZNER_API_KEY}"
-cloudflare_api_token = "${CLOUDFLARE_API_TOKEN}"
-region = "$(read_from_infrastructure $ENVIRONMENT region)"
-server_type = "$(read_from_infrastructure $ENVIRONMENT server_type)"
-operating_system = "$(read_from_infrastructure $ENVIRONMENT operating_system)"
-web_servers_count = $(read_from_infrastructure $ENVIRONMENT web)
-accessories_count = $(read_from_infrastructure $ENVIRONMENT accessories)
-domain_name = "$(read_from_infrastructure $ENVIRONMENT domain)"
-subdomain = "$(read_from_infrastructure $ENVIRONMENT subdomain)"
-EOF
+# Export Terraform variables as environment variables
+export TF_VAR_hetzner_api_key="${HETZNER_API_KEY}"
+export TF_VAR_cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
+export TF_VAR_region="$(read_from_infrastructure $ENVIRONMENT region)"
+export TF_VAR_server_type="$(read_from_infrastructure $ENVIRONMENT server_type)"
+export TF_VAR_operating_system="$(read_from_infrastructure $ENVIRONMENT operating_system)"
+export TF_VAR_web_servers_count=$(read_from_infrastructure $ENVIRONMENT web)
+export TF_VAR_accessories_count=$(read_from_infrastructure $ENVIRONMENT accessories)
+export TF_VAR_domain_name="$(read_from_infrastructure $ENVIRONMENT domain)"
+export TF_VAR_subdomain="$(read_from_infrastructure $ENVIRONMENT subdomain)"
 
-echo "terraform.tfvars created/updated with configuration from infrastructure.yml"
+export TF_VAR_ssh_key_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-ssh-key-${ENVIRONMENT}"
+export TF_VAR_network_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-network-${ENVIRONMENT}"
+export TF_VAR_load_balancer_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-lb-${ENVIRONMENT}"
+export TF_VAR_firewall_name="${TF_VAR_subdomain}.${TF_VAR_domain_name}-firewall-${ENVIRONMENT}"
+export TF_VAR_web_server_prefix="${TF_VAR_subdomain}.${TF_VAR_domain_name}-${ENVIRONMENT}"
+export TF_VAR_accessories_server_prefix="${TF_VAR_subdomain}.${TF_VAR_domain_name}-${ENVIRONMENT}"
+
+echo "Terraform variables exported as environment variables"
 
 # Generate SSH key
 ssh_key_path="$HOME/.ssh/hetzner"
@@ -81,4 +86,4 @@ terraform init
 
 # Run Terraform apply
 echo "Running Terraform apply..."
-terraform apply
+terraform apply -auto-approve

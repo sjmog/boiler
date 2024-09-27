@@ -133,6 +133,6 @@ Postgres is used for the database. You can connect to the database using the `ps
 
 ### Redis and Sidekiq for background jobs
 
-Redis and Sidekiq are used for background jobs. Redis is used for job queuing, and Sidekiq is used to run jobs.
+Redis is used for job queuing, and Sidekiq is used to run jobs.
 
 By default, Sidekiq runs on `localhost:6379` and Redis runs on `localhost:6379/12`.

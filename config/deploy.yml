@@ -7,9 +7,9 @@ servers:
     hosts:
       - web
     labels:
-      traefik.http.routers.boiler.rule: Host(`techmap.app`)
+      traefik.http.routers.boiler.rule: Host(`{{ subdomain }}.{{ domain }}`)
       traefik.http.routers.boiler_secure.entrypoints: websecure
-      traefik.http.routers.boiler_secure.rule: Host(`techmap.app`)
+      traefik.http.routers.boiler_secure.rule: Host(`{{ subdomain }}.{{ domain }}`)
       traefik.http.routers.boiler_secure.tls.certresolver: letsencrypt
     env:
       clear:

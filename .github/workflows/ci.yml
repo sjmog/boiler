@@ -3,8 +3,20 @@ name: CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
+    paths:
+      - 'infrastructure.yml'
+      - '.github/workflows/ci.yml'
+      - 'terraform/**'                # Monitor changes in Terraform configurations
+      - 'bin/provision'
+      - '.deployment.env'             # Include any other relevant paths
   push:
     branches: [ main, staging ]
+    paths:
+      - 'infrastructure.yml'
+      - '.github/workflows/ci.yml'
+      - 'terraform/**'
+      - 'bin/provision'
+      - '.deployment.env'
 
 jobs:
   scan_ruby:
@@ -101,28 +113,56 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install yq
+
+      - name: Restore Terraform state from cache
+        uses: actions/cache@v3
+        with:
+          path: terraform/terraform.tfstate
+          key: terraform-state-${{ github.event.pull_request.number }}
+          restore-keys: |
+            terraform-state-
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.3.0
+
+      - name: Terraform Init
         run: |
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
+          cd terraform
+          terraform init
+
       - name: Provision preview environment
         run: bin/provision
+
+      - name: Save Terraform state to cache
+        uses: actions/cache@v3
+        with:
+          path: terraform/terraform.tfstate
+          key: terraform-state-${{ github.event.pull_request.number }}
+          restore-keys: |
+            terraform-state-
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+
       - name: Install Kamal
         run: gem install kamal
+
       - name: Build and push Docker image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/your-app:preview-${{ github.event.pull_request.number }} .
           echo ${{ secrets.REGISTRY_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/your-app:preview-${{ github.event.pull_request.number }}
+
       - name: Deploy with Kamal
         run: |
           kamal setup -c preview
           kamal deploy -c preview
+
       - name: Run tests on preview environment
         run: |
           bin/rails db:create db:migrate
