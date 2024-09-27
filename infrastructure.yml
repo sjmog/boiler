@@ -5,11 +5,9 @@ preview:
   server_type: cx22
   operating_system: ubuntu-24.04
   domain: |-
-    Enter your domain name
-    This is the domain you'll use for your application, e.g., 'example.com'
-  subdomain: |2-
-    Enter your subdomain
-    This is the subdomain for your application, use '@' for apex domain
+    techmap.app
+  subdomain: |-
+    dev
 staging:
   web: 2
   accessories: 1
@@ -17,11 +15,9 @@ staging:
   server_type: cx22
   operating_system: ubuntu-24.04
   domain: |-
-    Enter your domain name
-    This is the domain you'll use for your application, e.g., 'example.com'
+    techmap.app
   subdomain: |-
-    Enter your subdomain
-    This is the subdomain for your application, use '@' for apex domain
+    dev
 production:
   web: 2
   accessories: 1
@@ -29,6 +25,5 @@ production:
   server_type: cx22
   operating_system: ubuntu-24.04
   domain: |-
-    Enter your domain name
-    This is the domain you'll use for your application, e.g., 'example.com'
-  subdomain: "\nEnter your subdomain\nThis is the subdomain for your application, use '@' for apex domain"
+    techmap.app
+  subdomain: "dev"

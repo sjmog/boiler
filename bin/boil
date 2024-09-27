@@ -26,17 +26,34 @@ prompt_with_instructions() {
     local prompt="$2"
     local instructions="$3"
     local default="${4:-}"
+    local hidden="${5:-false}"  # {{ edit_1 }} Added 'hidden' parameter
 
-    echo
-    echo "$prompt"
-    echo "$instructions"
-    if [ -n "$default" ]; then
-        read -p "Enter $var_name [$default]: " input
-        input="${input:-$default}"
+    # Redirect prompt messages to stderr to prevent them from being captured
+    echo >&2
+    echo >&2 "$prompt"
+    echo >&2 "$instructions"
+    
+    if [ "$hidden" = true ]; then  # {{ edit_2 }} Check if input should be hidden
+        if [ -n "$default" ]; then
+            read -s -p "Enter $var_name [$default]: " input
+            echo >&2
+            input="${input:-$default}"
+        else
+            read -s -p "Enter $var_name: " input
+            echo >&2
+        fi
+        echo "$var_name=$input" >> .deployment.env
+        # Removed echo "$input" to prevent plaintext display for hidden inputs  # {{ edit_3 }}
     else
-        read -p "Enter $var_name: " input
+        if [ -n "$default" ]; then
+            read -p "Enter $var_name [$default]: " input
+            input="${input:-$default}"
+        else
+            read -p "Enter $var_name: " input
+        fi
+        echo "$var_name=$input" >> .deployment.env
+        printf "%s" "$input"  # {{ edit_4 }} Use printf to avoid trailing newline
     fi
-    echo "$var_name=$input" >> .deployment.env
 }
 
 # Function to update infrastructure.yml
@@ -60,7 +77,7 @@ prompt_with_instructions "GITHUB_USERNAME" "Enter your GitHub username" "This is
 
 prompt_with_instructions "DOCKER_USERNAME" "Enter your Docker Hub username" "This is used for pushing and pulling Docker images. Create an account at https://hub.docker.com/ if you don't have one."
 
-prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry password" "This is used for pushing and pulling Docker images."
+prompt_with_instructions "REGISTRY_PASSWORD" "Enter your Docker Hub registry password" "This is used for pushing and pulling Docker images." "" true  # {{ edit_5 }} Enable hidden input for password
 
 # Prompt for domain and subdomain and update infrastructure.yml
 domain=$(prompt_with_instructions "DOMAIN_NAME" "Enter your domain name" "This is the domain you'll use for your application, e.g., 'example.com'" "boiler.app")
