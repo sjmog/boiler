@@ -4,26 +4,21 @@ preview:
   region: nbg1
   server_type: cx22
   operating_system: ubuntu-24.04
-  domain: |-
-    techmap.app
-  subdomain: |-
-    dev
+  domain: techmap.app
+  subdomain: dev
 staging:
   web: 2
   accessories: 1
   region: nbg1
   server_type: cx22
   operating_system: ubuntu-24.04
-  domain: |-
-    techmap.app
-  subdomain: |-
-    dev
+  domain: techmap.app
+  subdomain: dev
 production:
   web: 2
   accessories: 1
   region: nbg1
   server_type: cx22
   operating_system: ubuntu-24.04
-  domain: |-
-    techmap.app
+  domain: techmap.app
   subdomain: "dev"
